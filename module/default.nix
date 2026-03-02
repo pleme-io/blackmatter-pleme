@@ -44,6 +44,7 @@ let
     "${base}/kenshi"
     "${base}/shinka"
     # Tools & libraries
+    "${base}/compass.nvim"
     "${base}/zoekt-mcp"
     "${base}/codesearch"
     "${base}/curupira"
@@ -155,6 +156,7 @@ let
           nix:
             - blackmatter
             - blackmatter-nvim
+            - compass.nvim
             - blackmatter-shell
             - blackmatter-claude
             - blackmatter-desktop
