@@ -32,6 +32,7 @@ let
     "${base}/blackmatter-kubernetes"
     "${base}/blackmatter-go"
     "${base}/blackmatter-zig"
+    "${base}/blackmatter-macos"
     "${base}/blackmatter-opencode"
     "${base}/blackmatter-tend"
     "${base}/blackmatter-services"
