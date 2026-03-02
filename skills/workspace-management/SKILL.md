@@ -3,8 +3,8 @@ name: workspace-management
 description: Manage the pleme-io workspace — add repos, configure Zoekt/Codesearch indexing, expand tend config, add new orgs, and maintain the CLAUDE.md hierarchy. Use when onboarding new repos, setting up indexing for new projects, or expanding the workspace structure.
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 metadata:
-  version: "1.0.0"
-  last_verified: "2026-02-27"
+  version: "2.0.0"
+  last_verified: "2026-03-01"
   domain_keywords:
     - "workspace"
     - "zoekt"
@@ -31,8 +31,9 @@ Currently:
   binti-family/
 ```
 
-Configuration is declarative — all workspace state lives in `nix/nodes/cid/default.nix`
-and deploys via `home-manager` on rebuild.
+Configuration is split between two repos:
+- **blackmatter-pleme** — org-specific config (zoekt repos, codesearch sources, tend workspace, CLAUDE.md files)
+- **nix** — private config (daemon enable flags, token paths, personal workspaces)
 
 ## Adding a New Repo to the Workspace
 
@@ -45,17 +46,14 @@ No config change needed for discovery.
 
 ### 2. Add to Zoekt indexing
 
-Edit `nix/nodes/cid/default.nix`, find the `services.zoekt.daemon.repos` list,
+Edit `blackmatter-pleme/module/default.nix`, find the `defaultZoektRepos` list,
 and add the new repo path:
 
 ```nix
-services.zoekt.daemon = {
-  enable = true;
-  repos = let base = "~/code/github/pleme-io"; in [
-    # ... existing repos ...
-    "${base}/new-repo"    # ← add here
-  ];
-};
+defaultZoektRepos = let base = "~/code/github/pleme-io"; in [
+  # ... existing repos ...
+  "${base}/new-repo"    # ← add here
+];
 ```
 
 Zoekt indexes trigram patterns for instant exact-match search.
@@ -66,10 +64,12 @@ Codesearch is configured with `kind = "org"` for pleme-io, so it auto-discovers
 repos via the GitHub API. No manual addition needed unless you want to index
 repos from outside the org.
 
-### 4. Rebuild
+### 4. Push and rebuild
 
 ```bash
-cd ~/code/github/pleme-io/nix && nix run .#darwin-rebuild
+cd ~/code/github/pleme-io/blackmatter-pleme
+git add module/default.nix && git commit -m "feat: add new-repo to zoekt indexing" && git push
+tend flake-update --changed blackmatter-pleme
 ```
 
 ## Adding a New Org
@@ -82,27 +82,39 @@ mkdir -p ~/code/github/new-org
 
 ### 2. Add tend workspace
 
-Edit `nix/nodes/cid/default.nix`, find the `home.file.".config/tend/config.yaml"` block
-and add a new workspace:
+For pleme-io-related orgs, add to `blackmatter-pleme/module/default.nix` in the
+`plemeWorkspaceYaml` block.
 
-```yaml
-- name: new-org
-  provider: github
-  base_dir: ~/code/github/new-org
-  clone_method: ssh
-  discover: true
-  org: new-org
-  exclude: []
-  extra_repos: []
+For personal/private orgs, add via `blackmatter.components.pleme.workspace.extraTendWorkspaces`
+in the nix repo:
+
+```nix
+blackmatter.components.pleme.workspace.extraTendWorkspaces = ''
+  - name: new-org
+    provider: github
+    base_dir: ~/code/github/new-org
+    clone_method: ssh
+    discover: true
+    org: new-org
+    exclude: []
+    extra_repos: []
+'';
 ```
 
 ### 3. Add Zoekt repos (if needed)
 
-Add entries to `services.zoekt.daemon.repos` for repos you want trigram-indexed.
+For pleme-io repos: add to `defaultZoektRepos` in `blackmatter-pleme/module/default.nix`.
+
+For personal repos: use `blackmatter.components.pleme.indexing.extraZoektRepos` in nix:
+```nix
+blackmatter.components.pleme.indexing.extraZoektRepos = [
+  "~/code/github/new-org/some-repo"
+];
+```
 
 ### 4. Add Codesearch source (if needed)
 
-Add a new source entry to `services.codesearch.daemon.github.sources`:
+Add to `defaultCodesearchSources` in `blackmatter-pleme/module/default.nix`:
 
 ```nix
 {
@@ -116,13 +128,12 @@ Add a new source entry to `services.codesearch.daemon.github.sources`:
 
 ### 5. Optionally add CLAUDE.md
 
-Create `nix/nodes/cid/new-org-CLAUDE.md` and deploy via `home.file`:
-
-```nix
-home.file."code/github/new-org/CLAUDE.md".source = ./new-org-CLAUDE.md;
-```
+Create the CLAUDE.md file in `blackmatter-pleme/docs/` and deploy via the module,
+or in the nix repo for private content.
 
 ### 6. Optionally add .envrc
+
+Add to `blackmatter-pleme/module/default.nix` config section:
 
 ```nix
 home.file."code/github/new-org/.envrc".text = "use_tend\n";
@@ -130,10 +141,15 @@ home.file."code/github/new-org/.envrc".text = "use_tend\n";
 
 After rebuild, run `direnv allow ~/code/github/new-org/.envrc` once.
 
-### 7. Rebuild
+### 7. Push and rebuild
 
 ```bash
-cd ~/code/github/pleme-io/nix && nix run .#darwin-rebuild
+# If changes in blackmatter-pleme:
+cd ~/code/github/pleme-io/blackmatter-pleme && git add -A && git commit -m "feat: add new-org" && git push
+tend flake-update --changed blackmatter-pleme
+
+# If changes only in nix:
+cd ~/code/github/pleme-io/nix && nix run .#rebuild
 ```
 
 ## CLAUDE.md Hierarchy
@@ -142,11 +158,11 @@ Each level provides progressively more specific guidance:
 
 | File | Deployed From | Content |
 |------|--------------|---------|
-| `~/code/CLAUDE.md` | `nix/nodes/cid/workspace-CLAUDE.md` | Directory convention, how to add services/orgs |
-| `~/code/github/CLAUDE.md` | `nix/nodes/cid/github-CLAUDE.md` | GitHub-specific conventions, current orgs |
-| `~/code/github/pleme-io/CLAUDE.md` | `nix/nodes/cid/pleme-io-CLAUDE.md` | Full repo map, architecture, contribution guide |
+| `~/code/CLAUDE.md` | `blackmatter-pleme/docs/workspace-CLAUDE.md` | Directory convention, how to add services/orgs |
+| `~/code/github/CLAUDE.md` | `blackmatter-pleme/docs/github-CLAUDE.md` | GitHub-specific conventions, current orgs |
+| `~/code/github/pleme-io/CLAUDE.md` | `blackmatter-pleme/docs/pleme-io-CLAUDE.md` | Full repo map, architecture, contribution guide |
 
-To update any CLAUDE.md, edit the source file in the nix repo and rebuild.
+To update any CLAUDE.md, edit the source file in blackmatter-pleme and rebuild.
 Do NOT edit the deployed symlinks directly.
 
 ## Nix Integration for New Tools
@@ -166,7 +182,7 @@ new-tool = {
 
 ### 2. Add to home.packages
 
-Edit `nix/nodes/cid/default.nix`:
+Edit `nix/nodes/cid/workspace.nix`:
 
 ```nix
 home.packages = [
@@ -192,9 +208,8 @@ in `nix/overlays/`.
 
 | File | Purpose |
 |------|---------|
-| `nix/nodes/cid/default.nix` | Central config: tend, zoekt, codesearch, home.file, packages |
+| `blackmatter-pleme/module/default.nix` | Org config: zoekt repos, codesearch sources, tend workspace, CLAUDE.md |
+| `nix/nodes/cid/workspace.nix` | Private: packages, stateVersion, extra workspaces |
+| `nix/nodes/cid/mcp-services.nix` | Private: daemon enable flags, token paths |
 | `nix/flake.nix` | Flake inputs (all external repos) |
 | `~/.config/tend/config.yaml` | Deployed tend config (do not edit directly) |
-| `nix/nodes/cid/pleme-io-CLAUDE.md` | Source for pleme-io repo map |
-| `nix/nodes/cid/workspace-CLAUDE.md` | Source for root workspace guide |
-| `nix/nodes/cid/github-CLAUDE.md` | Source for GitHub-level guide |

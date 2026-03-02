@@ -3,8 +3,8 @@ name: claude-skills
 description: Create, update, and maintain Claude Code skills in the blackmatter-claude repo. Use when adding a new skill, modifying an existing skill, or understanding how skills are authored and deployed to the user's system via the Nix home-manager module.
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash
 metadata:
-  version: "1.1.0"
-  last_verified: "2026-02-24"
+  version: "2.0.0"
+  last_verified: "2026-03-01"
   domain_keywords:
     - "skill"
     - "claude"
@@ -68,15 +68,17 @@ git add flake.lock && git commit -m "chore: update blackmatter-claude" && git pu
 nix run .#darwin-rebuild
 ```
 
-### Extra skills (org-specific, in nix repo)
+### Org-specific skills (in blackmatter-pleme)
 
 ```
-nix repo  nodes/cid/skills/{name}/SKILL.md  (author skill here)
-        ↓  darwin-rebuild
+blackmatter-pleme repo   skills/{name}/SKILL.md  (author skill here)
+        ↓  git push
+nix repo                  (nix flake update blackmatter-pleme)
+        ↓  rebuild
 ~/.claude/skills/         (skill available to Claude Code)
 ```
 
-No flake update needed — just commit to nix and rebuild.
+Same deployment flow as bundled skills — push, flake update, rebuild.
 
 ## SKILL.md Format
 
@@ -160,17 +162,17 @@ ls ~/code/github/pleme-io/blackmatter-claude/skills/
 
 4. Commit, push, update nix, rebuild (see Deployment Pipeline above).
 
-### Extra (in nix repo, org-specific)
+### Org-specific (in blackmatter-pleme)
 
 1. Create the directory and file:
 
 ```bash
-mkdir -p ~/code/github/pleme-io/nix/nodes/cid/skills/{skill-name}
+mkdir -p ~/code/github/pleme-io/blackmatter-pleme/skills/{skill-name}
 ```
 
 2. Write `SKILL.md` with front matter + body content.
 
-3. The skill is already wired via `extraSkills` in `nodes/cid/default.nix`. Just rebuild.
+3. The module auto-discovers skills — just commit, push, flake update, rebuild.
 
 ## Updating an Existing Skill
 
@@ -179,13 +181,23 @@ mkdir -p ~/code/github/pleme-io/nix/nodes/cid/skills/{skill-name}
 3. For bundled: commit → push → flake update → rebuild.
 4. For extra: commit → rebuild.
 
-## Extra Skills Configuration
+## Skill Repos
 
-For skills that should NOT be in the public blackmatter-claude repo (org-specific, contains sensitive context), use the `extraSkills` option in nix:
+| Repo | Content | Audience |
+|------|---------|----------|
+| `blackmatter-claude` | Generic Claude Code skills (tool-agnostic) | All users |
+| `blackmatter-pleme` | Pleme-io org-specific skills (substrate, flake chain, helm, workspace) | Pleme-io developers |
+| `nix` (via `extraSkills`) | Private/user-specific skills | Single user |
+
+For private skills, use the `extraSkills` option in the relevant module:
 
 ```nix
 blackmatter.components.claude.skills.extraSkills = {
   my-private-skill = ./skills/my-private-skill/SKILL.md;
+};
+# or
+blackmatter.components.pleme.skills.extraSkills = {
+  my-org-private-skill = ./skills/my-org-private-skill/SKILL.md;
 };
 ```
 
@@ -194,7 +206,7 @@ These merge with bundled skills at evaluation time and deploy to the same `~/.cl
 ## Anti-Patterns
 
 - **Never put skills directly in `~/.claude/skills/`** — they'll be overwritten on rebuild. All skills go through the Nix pipeline.
-- **Never put user-specific data in bundled skills** — blackmatter-claude is public. Use `extraSkills` in the nix repo for private content.
+- **Never put user-specific data in bundled skills** — blackmatter-claude and blackmatter-pleme are public. Use `extraSkills` in the nix repo for private content.
 - **Never omit the description** — it's the primary matching signal. A skill without a good description won't be invoked.
 - **Never use generic names** — `utils`, `helper`, `misc` give Claude Code no matching signal.
 - **Never duplicate a CLAUDE.md concern** — skills are for procedural knowledge (how to do X). Static project context belongs in CLAUDE.md files.
