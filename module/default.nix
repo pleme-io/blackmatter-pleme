@@ -261,7 +261,9 @@ in {
     # ── Workspace ───────────────────────────────────────────────────
     (mkIf cfg.workspace.enable {
       home.file.".config/tend/config.yaml".text =
-        plemeWorkspaceYaml + cfg.workspace.extraTendWorkspaces;
+        plemeWorkspaceYaml + (lib.concatMapStringsSep "\n" (line:
+          if line == "" then "" else "  " + line
+        ) (lib.splitString "\n" cfg.workspace.extraTendWorkspaces));
       home.file."code/github/pleme-io/.envrc".text = "use_tend\n";
     })
 
