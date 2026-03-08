@@ -320,7 +320,7 @@ Low-level wgpu + winit + glyphon rendering stack. Metal on macOS, Vulkan on Linu
 - **Shader plugin API:** input_texture (binding 0), input_sampler (binding 1),
   uniforms (binding 2: time, resolution). Custom shaders: `~/.config/{app}/shaders/*.wgsl`
 - **Does NOT provide:** event loops, render loops, input dispatch — see madori
-- **Consumers:** madori, egaku, fude, all GPU applications
+- **Consumers:** madori, egaku, mojiban, all GPU applications
 
 ### `madori` — GPU App Framework
 Application shell that uses garasu. Provides the event loop → GPU init → render loop →
@@ -535,7 +535,7 @@ GPU-rendered NordVPN client. Uses NordVPN service for all VPN operations.
 GPU-rendered unified chat client for Discord, Matrix, and Slack.
 
 - **Language:** Rust
-- **Key deps:** garasu (GPU), egaku (widgets), fude (rich text), oto (voice),
+- **Key deps:** garasu (GPU), egaku (widgets), mojiban (rich text), oto (voice),
   serenity (Discord), matrix-sdk (Matrix), shikumi (config)
 - **Modules:** `protocol` (common trait), `discord` (serenity), `matrix` (matrix-sdk),
   `slack` (REST+WebSocket), `render` (GPU UI), `config` (multi-account)
@@ -546,7 +546,7 @@ GPU-rendered unified chat client for Discord, Matrix, and Slack.
 GPU-rendered TUI browser. Full web rendering in a GPU-accelerated interface.
 
 - **Language:** Rust
-- **Key deps:** garasu (GPU), egaku (widgets), fude (rich text), html5ever (HTML),
+- **Key deps:** garasu (GPU), egaku (widgets), mojiban (rich text), html5ever (HTML),
   lightningcss (CSS), taffy (flexbox/grid layout), shikumi (config)
 - **Modules:** `dom` (HTML parsing), `css` (cascade), `layout` (taffy), `fetch` (reqwest),
   `render` (GPU content), `config` (shikumi)
