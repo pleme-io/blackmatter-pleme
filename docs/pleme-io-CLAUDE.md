@@ -615,15 +615,14 @@ TUI email client with GPU-assisted rendering. (Already exists.)
 - **Key deps:** ratatui-image, chromiumoxide, shikumi, async-imap, lettre
 - **Architecture:** See `hikyaku/CLAUDE.md`
 
-### `ayatsuri` — Window Manager *(repo: karakuri)*
-macOS window management via Bevy ECS. (Already exists.) Crate/binary renamed from
-`karakuriza`/`karakuri` to `ayatsuri`; the GitHub repo remains `karakuri`.
+### `ayatsuri` — Window Manager
+macOS window management via Bevy ECS. (Already exists.)
 
 - **Language:** Rust
 - **crates.io:** `ayatsuri`
 - **Binary:** `ayatsuri`
 - **Key deps:** bevy, rhai (scripting), rmcp (MCP server)
-- **Architecture:** See `karakuri/CLAUDE.md`
+- **Architecture:** See `ayatsuri/CLAUDE.md`
 
 ### `tanken` — File Manager
 GPU-rendered file manager with fast navigation and preview.
