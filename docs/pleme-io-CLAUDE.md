@@ -21,19 +21,26 @@ All repositories under `~/code/github/pleme-io/`. Read this before touching any 
 
   ┌─────────────────── Shared Rust Libraries ───────────────────┐
   │  shikumi (config)  garasu (GPU primitives)  egaku (widgets) │
-  │  irodori (colors)  hasami (clipboard)  tsuuchi (notify)     │
-  │  kaname (MCP)  soushi (Rhai)  awase (hotkeys)               │
-  │  mojiban (rich text)  oto (audio)  tsunagu (daemon IPC)     │
-  │                                                             │
-  │  Planned: madori (app framework), todoku (HTTP),            │
-  │           irodzuki (GPU theming)                             │
+  │  irodori (colors)  irodzuki (GPU theming)  madori (app fw)  │
+  │  mojiban (rich text)   oto (audio)  tsunagu (daemon IPC)    │
+  │  todoku (HTTP)  hikidashi (clipboard)  hasami (clip+hist)   │
+  │  kotoha (MCP)  kaname (MCP scaffold)  awase (hotkeys)       │
+  │  soushi (Rhai)  tsuuchi (notify)  denshin (WS gateway)      │
+  │  kenshou (auth)  eizou (media/WebRTC)                       │
   └─────────────────────────────────────────────────────────────┘
             ↑ consumed by ↑
   ┌─────────────────── GPU Applications ────────────────────────┐
-  │  mado (terminal)   hibiki (music)   kagi (passwords)        │
-  │  kekkai (VPN)      fumi (chat)      nami (browser)          │
-  │  tobira (launcher) hikyaku (email)  karakuri (window mgr)   │
+  │  mado (terminal)    hibikine (music)    kagibako (passwords)│
+  │  mamorigami (VPN)   fumi (chat)         aranami (browser)   │
+  │  tobirato (launcher) hikyaku (email)    ayatsuri (wm)       │
+  │  tanken (files)     myaku (sysmon)      hikki (notes)       │
+  │  shashin (images)   koyomiban (cal)     shirase (notify)    │
   └─────────────────────────────────────────────────────────────┘
+            ↑ servers ↑
+  ┌─────────────────── Server Applications ────────────────────┐
+  │  hiroba (chat server — Stoat/Discord alternative)          │
+  │  taimen (video conferencing — Visio/Zoom alternative)      │
+  └────────────────────────────────────────────────────────────┘
 ```
 
 **Hard rule:** User-specific data (names, IPs, SSH hosts, secrets, kubeconfigs) lives
@@ -248,8 +255,8 @@ release profile (codegen-units=1, lto=true). Config via shikumi
 ### Dependency Graph
 
 ```
-Application (tobira, tanken, myaku, hikki, shashin, koyomi, shirase,
-             mado, hibiki, kagi, kekkai, fumi, nami)
+Application (tobirato, tanken, myaku, hikki, shashin, koyomiban, shirase,
+             mado, hibikine, kagibako, mamorigami, fumi, aranami)
        │
        ├── shikumi (config: discovery, figment providers, ArcSwap hot-reload)
        ├── garasu (GPU primitives: wgpu context, text, shaders)
@@ -307,7 +314,7 @@ Abstracts figment and imposes pleme-io configuration standards.
 - **Dep:** `shikumi = { git = "https://github.com/pleme-io/shikumi" }`
 - **Convention:** Every app uses `ConfigDiscovery::new("appname").env_override("APPNAME_CONFIG")`
   then `ConfigStore::<AppConfig>::load(&path, "APPNAME_")`. Config files are YAML.
-- **Consumers:** tobira, hikyaku, mado, hibiki, kagi, kekkai, fumi, nami
+- **Consumers:** tobirato, hikyaku, mado, hibikine, kagibako, mamorigami, fumi, aranami
 
 ### `garasu` — GPU Rendering Primitives
 Low-level wgpu + winit + glyphon rendering stack. Metal on macOS, Vulkan on Linux.
@@ -334,7 +341,7 @@ eliminated per app.
   `KeyCode::from_winit()` (winit → abstract key mapping)
 - **Dep:** `madori = { git = "https://github.com/pleme-io/madori" }`
 - **Built on:** garasu (GPU context, text), egaku (widget state), winit (event loop)
-- **Consumers:** mado, hibiki, kagi, kekkai, fumi, nami
+- **Consumers:** mado, hibikine, kagibako, mamorigami, fumi, aranami
 
 ### `egaku` — GPU Widget Toolkit
 UI primitives built on garasu. Pure state machines — consumers render via garasu.
@@ -355,7 +362,7 @@ Converts markdown, code, and structured text into styled glyph runs for garasu.
   `StyledSpan` (text + color + weight + italic + monospace)
 - **Dep:** `mojiban = { git = "https://github.com/pleme-io/mojiban" }`
 - **Backends:** pulldown-cmark (markdown), tree-sitter (syntax highlighting)
-- **Consumers:** fumi (chat markdown), nami (HTML content), mado (terminal), hibiki (lyrics)
+- **Consumers:** fumi (chat markdown), aranami (HTML content), mado (terminal), hibikine (lyrics)
 - **crates.io:** `mojiban` (fude was taken)
 
 ### `oto` — Audio Framework
@@ -366,7 +373,7 @@ Shared audio primitives for music playback and voice communication.
   `Decoder` (codec detection), `AudioDevice`, `VoiceStream` (capture/playback, mute/deafen)
 - **Dep:** `oto = { git = "https://github.com/pleme-io/oto" }`
 - **Backends:** rodio (playback), symphonia (FLAC, ALAC, WAV, MP3, AAC, OGG, Opus)
-- **Consumers:** hibiki (music playback), fumi (voice chat)
+- **Consumers:** hibikine (music playback), fumi (voice chat)
 
 ### `kaname` — MCP Server Framework *(renamed from hashira/kotoba)*
 Shared boilerplate and helpers for building MCP servers with rmcp.
@@ -378,8 +385,8 @@ Shared boilerplate and helpers for building MCP servers with rmcp.
   `KanameError` (common error type)
 - **Dep:** `kaname = { git = "https://github.com/pleme-io/kaname" }`
 - **Pinned rmcp:** 0.15 with `["server", "transport-io"]`
-- **Consumers:** all MCP servers (zoekt-mcp, codesearch, karakuri, hikyaku, umbra,
-  mathscape, mado, hibiki, kagi, kekkai, fumi, nami)
+- **Consumers:** all MCP servers (zoekt-mcp, codesearch, ayatsuri, hikyaku, umbra,
+  mathscape, mado, hibikine, kagibako, mamorigami, fumi, aranami)
 - **crates.io:** `kaname` (hashira was taken)
 
 ### `todoku` — HTTP Client Framework
@@ -393,8 +400,8 @@ so every app with API calls uses the same patterns.
   configurable status codes)
 - **Dep:** `todoku = { git = "https://github.com/pleme-io/todoku" }`
 - **Does NOT provide:** WebSocket, gRPC, or non-HTTP protocols
-- **Consumers:** kagi (1Password API), kekkai (NordVPN API), nami (web fetching),
-  fumi (Slack REST), hibiki (metadata APIs)
+- **Consumers:** kagibako (1Password API), mamorigami (NordVPN API), aranami (web fetching),
+  fumi (Slack REST), hibikine (metadata APIs)
 
 ### `hasami` — Clipboard Abstraction *(renamed from hikidashi)*
 Thread-safe clipboard with history and timed clearing.
@@ -404,7 +411,7 @@ Thread-safe clipboard with history and timed clearing.
   `TimedClear` (auto-clear after configurable duration)
 - **Dep:** `hasami = { git = "https://github.com/pleme-io/hasami" }`
 - **Built on:** arboard (cross-platform clipboard), tokio (timed operations)
-- **Consumers:** kagi (password copy), mado (terminal paste), fumi (message copy)
+- **Consumers:** kagibako (password copy), mado (terminal paste), fumi (message copy)
 - **crates.io:** `hasami`
 
 ### `irodzuki` — GPU Theme System
@@ -424,8 +431,8 @@ uniforms, ANSI color tables, or custom GPU pipelines. irodzuki fills that gap.
   egaku Theme base16 fields → irodzuki converts to GPU-native formats at runtime
 - **Does NOT define color schemes** — it transforms egaku::Theme into GPU-consumable
   formats. Color scheme definitions come from Stylix/egaku.
-- **Consumers:** mado (terminal ANSI colors + shader uniforms), hibiki (visualizer colors),
-  kagi, kekkai, fumi, nami (UI accent/background in GPU pipeline)
+- **Consumers:** mado (terminal ANSI colors + shader uniforms), hibikine (visualizer colors),
+  kagibako, mamorigami, fumi, aranami (UI accent/background in GPU pipeline)
 
 ### `irodori` — Color & Theme System *(renamed from iro)*
 Nord-inspired color palette with sRGB/linear conversion and semantic color mapping.
@@ -454,7 +461,7 @@ Shared Rhai engine setup with builtins and script loading for user-extensible ap
 - **API:** `ScriptEngine::new()`, `register_builtins()`, `load_scripts(dir)`,
   `eval(script)`, builtin math/string/array functions
 - **Dep:** `soushi = { git = "https://github.com/pleme-io/soushi" }`
-- **Consumers:** karakuri (window manager scripting), future apps with user scripting
+- **Consumers:** ayatsuri (window manager scripting), future apps with user scripting
 - **crates.io:** `soushi`
 
 ### `awase` — Global Hotkey Abstraction *(renamed from kukan)*
@@ -464,7 +471,7 @@ Key types, parser, and platform-agnostic hotkey manager trait.
 - **API:** `HotkeyParser::parse("Cmd+Shift+Space")`, `Hotkey` (modifier + key),
   `HotkeyManager` trait (register/unregister), `Modifier`/`KeyCode` enums
 - **Dep:** `awase = { git = "https://github.com/pleme-io/awase" }`
-- **Consumers:** tobira (launcher hotkey), karakuri (window management shortcuts)
+- **Consumers:** tobirato (launcher hotkey), ayatsuri (window management shortcuts)
 - **crates.io:** `awase` (kukan was taken)
 
 ### `tsunagu` — Daemon IPC Framework
@@ -478,6 +485,33 @@ Service/daemon lifecycle management for apps with background processes.
   own `.proto` files and use tonic for gRPC.
 - **Consumers:** all apps with daemon/background service mode
 
+### `denshin` — WebSocket Gateway
+Real-time WebSocket gateway framework for server applications.
+
+- **Language:** Rust
+- **API:** `WsGateway`, `ConnectionManager`, `EventBroadcaster`, room/channel multiplexing
+- **Dep:** `denshin = { git = "https://github.com/pleme-io/denshin" }`
+- **Consumers:** hiroba (chat server), taimen (signaling)
+- **crates.io:** `denshin`
+
+### `kenshou` — Authentication Framework
+Authentication and authorization library for server applications.
+
+- **Language:** Rust
+- **API:** `AuthProvider`, `TokenValidator`, `SessionManager`, OAuth2/OIDC flows
+- **Dep:** `kenshou = { git = "https://github.com/pleme-io/kenshou" }`
+- **Consumers:** hiroba (user auth), taimen (meeting auth)
+- **crates.io:** `kenshou`
+
+### `eizou` — Media/WebRTC Framework
+WebRTC media handling for video/audio streaming in server applications.
+
+- **Language:** Rust
+- **API:** `MediaRouter`, `SfuSession`, `TrackPublisher`, `TrackSubscriber`
+- **Dep:** `eizou = { git = "https://github.com/pleme-io/eizou" }`
+- **Consumers:** taimen (video conferencing), hiroba (voice channels)
+- **crates.io:** `eizou`
+
 ---
 
 ## GPU Applications
@@ -488,43 +522,50 @@ All GPU applications follow the same patterns:
 - Configuration via shikumi (`~/.config/{app}/{app}.yaml`)
 - Daemon mode via tsunagu
 - Nix integration: `flake.nix` with `overlays.default`, `homeManagerModules.default`,
-  `packages`, `devShells` (following tobira/substrate patterns)
+  `packages`, `devShells` (following tobirato/substrate patterns)
 - Nord color theme defaults
 
 ### `mado` — Terminal Emulator
 GPU-rendered terminal emulator following Ghostty's philosophy, written in Rust.
 
 - **Language:** Rust
+- **crates.io:** `mado`
 - **Key deps:** garasu (GPU), vte (VT100 parsing), nix (PTY), shikumi (config)
 - **Modules:** `render` (GPU pipeline), `terminal` (VT state machine), `pty` (shell spawn),
   `platform` (macOS objc2 / Linux), `config` (shikumi)
 - **Features:** GPU text rendering, WGSL shader plugins, VT100/xterm emulation,
   split panes, tabs, platform-native integration
 
-### `hibiki` — Music Player + BitTorrent
+### `hibikine` — Music Player + BitTorrent *(repo: hibiki)*
 GPU-rendered music player with built-in BitTorrent client for hi-fi music.
 
 - **Language:** Rust
+- **crates.io:** `hibikine` (hibiki was taken)
+- **Binary:** `hibiki` (via `[[bin]] name = "hibiki"`)
 - **Key deps:** garasu (GPU), oto (audio), librqbit (BitTorrent), shikumi (config)
 - **Modules:** `audio` (rodio+symphonia), `torrent` (librqbit), `library` (metadata scan),
   `render` (GPU UI), `config` (shikumi)
 - **Features:** FLAC/ALAC/WAV lossless playback, gapless, magnet links, DHT,
   library management, waveform visualizer
 
-### `kagi` — 1Password Client
+### `kagibako` — 1Password Client *(repo: kagi)*
 GPU-rendered 1Password client. Uses 1Password service and API for all vault operations.
 
 - **Language:** Rust
+- **crates.io:** `kagibako` (kagi was taken)
+- **Binary:** `kagi` (via `[[bin]] name = "kagi"`)
 - **Key deps:** garasu (GPU), reqwest (1Password API), arboard (clipboard),
   zeroize (secure memory), shikumi (config)
 - **Modules:** `api` (1Password Connect + `op` CLI), `vault` (data models),
   `clipboard` (auto-clear), `render` (GPU vault browser), `config` (shikumi)
 - **Features:** fuzzy search, secure clipboard auto-clear, biometric unlock via `op` CLI
 
-### `kekkai` — NordVPN Client
+### `mamorigami` — NordVPN Client *(repo: kekkai)*
 GPU-rendered NordVPN client. Uses NordVPN service for all VPN operations.
 
 - **Language:** Rust
+- **crates.io:** `mamorigami` (kekkai was taken)
+- **Binary:** `kekkai` (via `[[bin]] name = "kekkai"`)
 - **Key deps:** garasu (GPU), reqwest (NordVPN API), shikumi (config)
 - **Modules:** `api` (NordVPN REST + CLI), `servers` (selection/filtering),
   `connection` (lifecycle), `render` (GPU server map), `config` (shikumi)
@@ -535,6 +576,7 @@ GPU-rendered NordVPN client. Uses NordVPN service for all VPN operations.
 GPU-rendered unified chat client for Discord, Matrix, and Slack.
 
 - **Language:** Rust
+- **crates.io:** `fumi`
 - **Key deps:** garasu (GPU), egaku (widgets), mojiban (rich text), oto (voice),
   serenity (Discord), matrix-sdk (Matrix), shikumi (config)
 - **Modules:** `protocol` (common trait), `discord` (serenity), `matrix` (matrix-sdk),
@@ -542,10 +584,12 @@ GPU-rendered unified chat client for Discord, Matrix, and Slack.
 - **Features:** multi-protocol, E2E encryption (Matrix), voice chat, rich text,
   reactions, embeds, daemon mode for persistent connections, desktop notifications
 
-### `nami` — TUI Browser
+### `aranami` — TUI Browser *(repo: nami)*
 GPU-rendered TUI browser. Full web rendering in a GPU-accelerated interface.
 
 - **Language:** Rust
+- **crates.io:** `aranami` (nami was taken)
+- **Binary:** `nami` (via `[[bin]] name = "nami"`)
 - **Key deps:** garasu (GPU), egaku (widgets), mojiban (rich text), html5ever (HTML),
   lightningcss (CSS), taffy (flexbox/grid layout), shikumi (config)
 - **Modules:** `dom` (HTML parsing), `css` (cascade), `layout` (taffy), `fetch` (reqwest),
@@ -554,10 +598,12 @@ GPU-rendered TUI browser. Full web rendering in a GPU-accelerated interface.
   keyboard navigation (vim-like), bookmarks, HTTPS-only mode, tracker blocking
 - **No JavaScript** initially — static HTML+CSS rendering, JS via boa_engine later
 
-### `tobira` — App Launcher
+### `tobirato` — App Launcher *(repo: tobira)*
 GPU-rendered fast app launcher for macOS and Linux. (Already exists.)
 
 - **Language:** Rust
+- **crates.io:** `tobirato` (tobira was taken)
+- **Binary:** `tobira` (via `[[bin]] name = "tobira"`)
 - **Key deps:** wgpu, winit, glyphon, shikumi, sakuin (tantivy), kiroku (SeaORM)
 - **Architecture:** See `tobira/CLAUDE.md`
 
@@ -565,15 +611,96 @@ GPU-rendered fast app launcher for macOS and Linux. (Already exists.)
 TUI email client with GPU-assisted rendering. (Already exists.)
 
 - **Language:** Rust
+- **crates.io:** `hikyaku`
 - **Key deps:** ratatui-image, chromiumoxide, shikumi, async-imap, lettre
 - **Architecture:** See `hikyaku/CLAUDE.md`
 
-### `karakuri` — Window Manager
-macOS window management via Bevy ECS. (Already exists.)
+### `ayatsuri` — Window Manager *(repo: karakuri)*
+macOS window management via Bevy ECS. (Already exists.) Crate/binary renamed from
+`karakuriza`/`karakuri` to `ayatsuri`; the GitHub repo remains `karakuri`.
 
 - **Language:** Rust
+- **crates.io:** `ayatsuri`
+- **Binary:** `ayatsuri`
 - **Key deps:** bevy, rhai (scripting), rmcp (MCP server)
 - **Architecture:** See `karakuri/CLAUDE.md`
+
+### `tanken` — File Manager
+GPU-rendered file manager with fast navigation and preview.
+
+- **Language:** Rust
+- **crates.io:** `tanken`
+- **Key deps:** garasu (GPU), egaku (widgets), shikumi (config)
+- **Features:** fast directory navigation, file preview, bulk operations, tabs
+
+### `myaku` — System Monitor
+GPU-rendered system monitor with real-time resource graphs.
+
+- **Language:** Rust
+- **crates.io:** `myaku`
+- **Key deps:** garasu (GPU), egaku (widgets), shikumi (config), sysinfo
+- **Features:** CPU, memory, disk, network graphs, process list, GPU metrics
+
+### `hikki` — Note Editor
+GPU-rendered markdown note editor with wiki links and knowledge graph.
+
+- **Language:** Rust
+- **crates.io:** `hikki`
+- **Key deps:** garasu (GPU), egaku (widgets), sumifude (rich text), shikumi (config)
+- **Features:** markdown editing, wiki links, backlinks, knowledge graph visualization
+
+### `shashin` — Image Viewer
+GPU-rendered image viewer with fast gallery and metadata display.
+
+- **Language:** Rust
+- **crates.io:** `shashin`
+- **Key deps:** garasu (GPU), image (decoding), shikumi (config)
+- **Features:** fast gallery, EXIF metadata, zoom/pan, basic editing, slideshow
+
+### `koyomiban` — Calendar
+GPU-rendered calendar with scheduling and sync.
+
+- **Language:** Rust
+- **crates.io:** `koyomiban` (koyomi was taken)
+- **Binary:** `koyomi` (via `[[bin]] name = "koyomi"`)
+- **Key deps:** garasu (GPU), egaku (widgets), todoku (HTTP), shikumi (config)
+- **Features:** calendar views, reminders, CalDAV sync, recurring events
+
+### `shirase` — Notification Center
+GPU-rendered unified notification management.
+
+- **Language:** Rust
+- **crates.io:** `shirase`
+- **Key deps:** garasu (GPU), egaku (widgets), tsuuchi (notifications), shikumi (config)
+- **Features:** notification aggregation, filtering, history, do-not-disturb
+
+---
+
+## Server Applications
+
+Server-side applications that complement the GPU client apps.
+
+### `hiroba` — Chat Server *(Stoat/Discord alternative)*
+Open-source chat server. Provides the server-side infrastructure for real-time
+text/voice communication, similar to Discord/Stoat but built in pleme-io style.
+
+- **Language:** Rust
+- **crates.io:** `hiroba`
+- **Key deps:** denshin (WebSocket gateway), kenshou (auth), tokio, axum, serde
+- **Features:** channels, roles, permissions, voice rooms, federation-ready,
+  WebSocket gateway for real-time messaging
+- **Client:** fumi connects to hiroba as one of its chat protocols
+
+### `taimen` — Video Conferencing *(Visio/Zoom alternative)*
+Open-source video conferencing server. Provides WebRTC-based video/audio
+conferencing, similar to La Suite Meet/Zoom but built in pleme-io style.
+
+- **Language:** Rust
+- **crates.io:** `taimen`
+- **Key deps:** eizou (media/WebRTC), kenshou (auth), denshin (signaling),
+  tokio, axum, serde
+- **Features:** video/audio conferencing, screen sharing, recording,
+  SFU architecture, room management
 
 ---
 
@@ -640,7 +767,7 @@ Shell extension utilities for blackmatter-shell.
 
 ## Nix Integration Patterns
 
-### Application flake.nix (tobira pattern)
+### Application flake.nix (tobirato pattern)
 
 All GPU applications follow the same flake structure:
 
