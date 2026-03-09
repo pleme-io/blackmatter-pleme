@@ -27,12 +27,14 @@ All repositories under `~/code/github/pleme-io/`. Read this before touching any 
   │  kotoha (MCP)  kaname (MCP scaffold)  awase (hotkeys)       │
   │  soushi (Rhai)  tsuuchi (notify)  denshin (WS gateway)      │
   │  kenshou (auth)  eizou (media/WebRTC)                       │
+  │  nami-core (browser core: DOM, CSS, layout)                 │
   └─────────────────────────────────────────────────────────────┘
             ↑ consumed by ↑
   ┌─────────────────── GPU Applications ────────────────────────┐
   │  mado (terminal)    hibikine (music)    kagibako (passwords)│
   │  mamorigami (VPN)   fumi (chat)         aranami (browser)   │
-  │  tobirato (launcher) hikyaku (email)    ayatsuri (wm)       │
+  │  namimado (desktop browser)  ayatsuri (wm)                  │
+  │  tobirato (launcher) hikyaku (email)                        │
   │  tanken (files)     myaku (sysmon)      hikki (notes)       │
   │  shashin (images)   koyomiban (cal)     shirase (notify)    │
   └─────────────────────────────────────────────────────────────┘
@@ -256,8 +258,10 @@ release profile (codegen-units=1, lto=true). Config via shikumi
 
 ```
 Application (tobirato, tanken, myaku, hikki, shashin, koyomiban, shirase,
-             mado, hibikine, kagibako, mamorigami, fumi, aranami)
+             mado, hibikine, kagibako, mamorigami, fumi, aranami, namimado)
        │
+       ├── nami-core (browser core: DOM, CSS cascade, layout — aranami + namimado)
+       │     └── html5ever + lightningcss + taffy
        ├── shikumi (config: discovery, figment providers, ArcSwap hot-reload)
        ├── garasu (GPU primitives: wgpu context, text, shaders)
        │     └── wgpu + winit + glyphon
@@ -301,8 +305,9 @@ Application (tobirato, tanken, myaku, hikki, shashin, koyomiban, shirase,
 | tsunagu | Daemon lifecycle (PID, socket paths, health) | RPC schema — consumers bring tonic/proto |
 | shikumi | Config loading (discovery, hot-reload, ArcSwap) | App logic — just provides `T` to consumers |
 | madori *(planned)* | App framework (event loop, render loop, input dispatch) | GPU context internals |
-| todoku *(planned)* | HTTP client (auth, retry, JSON) | WebSocket, gRPC |
-| irodzuki *(planned)* | Base16 → GPU uniforms, ANSI palette, shader color vars | Color scheme definitions |
+| todoku | HTTP client (auth, retry, JSON) | WebSocket, gRPC |
+| irodzuki | Base16 → GPU uniforms, ANSI palette, shader color vars | Color scheme definitions |
+| nami-core | Browser core (DOM, CSS cascade, layout, content blocking, storage) | Rendering — consumers bring garasu or Servo |
 
 ### `shikumi` — Configuration Library
 Config discovery, hot-reload, and ArcSwap store for Nix-managed desktop apps.
@@ -512,6 +517,18 @@ WebRTC media handling for video/audio streaming in server applications.
 - **Consumers:** taimen (video conferencing), hiroba (voice channels)
 - **crates.io:** `eizou`
 
+### `nami-core` — Shared Browser Core
+Shared browser infrastructure library used by both aranami (TUI browser) and
+namimado (desktop browser). Provides the content pipeline below the rendering layer.
+
+- **Language:** Rust
+- **API:** DOM tree (html5ever), CSS cascade (lightningcss), flexbox/grid layout (taffy),
+  content blocking (ad/tracker filter lists), bookmarks/history storage
+- **Dep:** `nami-core = { git = "https://github.com/pleme-io/nami-core" }`
+- **Features:** `network` (enables todoku HTTP), `config` (enables shikumi)
+- **Consumers:** aranami (TUI browser), namimado (desktop browser)
+- **Build:** substrate `rust-library.nix`
+
 ---
 
 ## GPU Applications
@@ -526,15 +543,27 @@ All GPU applications follow the same patterns:
 - Nord color theme defaults
 
 ### `mado` — Terminal Emulator
-GPU-rendered terminal emulator following Ghostty's philosophy, written in Rust.
+GPU-rendered terminal emulator following Ghostty's philosophy: speed + features +
+native UI without compromise. Pure Rust, wgpu Metal/Vulkan rendering.
 
 - **Language:** Rust
-- **crates.io:** `mado`
-- **Key deps:** garasu (GPU), vte (VT100 parsing), nix (PTY), shikumi (config)
-- **Modules:** `render` (GPU pipeline), `terminal` (VT state machine), `pty` (shell spawn),
-  `platform` (macOS objc2 / Linux), `config` (shikumi)
-- **Features:** GPU text rendering, WGSL shader plugins, VT100/xterm emulation,
-  split panes, tabs, platform-native integration
+- **crates.io:** `mado` (available, not yet reserved)
+- **Key deps:** garasu (GPU), madori (app framework), vte (VT100 parsing),
+  shikumi (config), hasami (clipboard)
+- **Modules:** `terminal.rs` (VT state machine, VecDeque grid, 58 tests),
+  `render.rs` (three-pass GPU: clear → instanced rects → glyphon text),
+  `pty.rs` (openpty + tokio async reader/writer, login shell),
+  `selection.rs` (click/double/triple-click, word/line select),
+  `config.rs` (shikumi hot-reload), `platform.rs` (native integration stub)
+- **Architecture:** Two threads (main + PTY/tokio). Target: four-thread model
+  (main/IO/read/render) inspired by Ghostty.
+- **GPU pipeline:** RectPipeline (WGSL instanced colored rects for cell backgrounds,
+  cursor, decorations, selection highlight) + glyphon per-row rich text buffers with
+  per-cell color spans, bold-as-bright, configurable font family.
+- **VT emulation:** CUU/CUD/CUP/ED/EL/SGR/DECSTBM/alternate screen/mouse tracking
+  (1000/1002/1003 + SGR)/bracketed paste/synchronized output/focus reporting/
+  CBT/TBC/REP/DA/DSR/OSC 0/2/7. Missing: OSC 52/8/133, Kitty protocols.
+- **Roadmap:** See `mado/CLAUDE.md` for full Ghostty parity roadmap (5 phases)
 
 ### `hibikine` — Music Player + BitTorrent *(repo: hibiki)*
 GPU-rendered music player with built-in BitTorrent client for hi-fi music.
@@ -586,17 +615,32 @@ GPU-rendered unified chat client for Discord, Matrix, and Slack.
 
 ### `aranami` — TUI Browser *(repo: nami)*
 GPU-rendered TUI browser. Full web rendering in a GPU-accelerated interface.
+Shares browser core with namimado via nami-core.
 
 - **Language:** Rust
 - **crates.io:** `aranami` (nami was taken)
 - **Binary:** `nami` (via `[[bin]] name = "nami"`)
-- **Key deps:** garasu (GPU), egaku (widgets), mojiban (rich text), html5ever (HTML),
-  lightningcss (CSS), taffy (flexbox/grid layout), shikumi (config)
-- **Modules:** `dom` (HTML parsing), `css` (cascade), `layout` (taffy), `fetch` (reqwest),
-  `render` (GPU content), `config` (shikumi)
+- **Key deps:** nami-core (browser core), garasu (GPU), egaku (widgets), mojiban (rich text),
+  shikumi (config)
+- **Modules:** `render` (GPU content), `config` (shikumi), `fetch` (reqwest)
 - **Features:** HTML5 parsing, CSS cascade, flexbox/grid layout, inline images,
   keyboard navigation (vim-like), bookmarks, HTTPS-only mode, tracker blocking
 - **No JavaScript** initially — static HTML+CSS rendering, JS via boa_engine later
+- **Shared core:** DOM, CSS, layout, content blocking, storage all via nami-core
+
+### `namimado` — Desktop Browser *(repo: namimado)*
+Desktop web browser with embedded Servo engine and garasu GPU chrome.
+Shares browser core with aranami via nami-core.
+
+- **Language:** Rust
+- **Key deps:** nami-core (browser core), garasu (GPU chrome), egaku (widgets),
+  irodzuki (theming), shikumi (config), winit (windowing), Servo (web engine)
+- **Features:** `browser-core` (enables nami-core), `gpu-chrome` (enables garasu/egaku/irodzuki/shikumi)
+- **Modules:** `browser` (tab management, navigation), `chrome` (toolbar, sidebar, statusbar),
+  `webview` (Servo engine interface), `ipc` (JS↔Rust bridge), `config` (shikumi)
+- **Servo:** Not yet on crates.io — wired in via Nix build (substrate). Engine interface
+  defined as trait-based scaffold, ready for Servo embedding API.
+- **Build:** substrate `rust-tool-release-flake.nix` + HM module
 
 ### `tobirato` — App Launcher *(repo: tobira)*
 GPU-rendered fast app launcher for macOS and Linux. (Already exists.)
@@ -756,6 +800,16 @@ Nix flake management tool. Cross-platform CLI for flake operations.
 
 - **Language:** Rust
 - **Build:** substrate `rust-tool-release-flake.nix` (4-target cross-compilation)
+
+### `kontena`
+Container runtime management daemon for macOS. Pure Rust replacement for shell
+scripts in podman/colima modules. Uses exponential backoff and adaptive polling
+instead of fixed sleep intervals.
+
+- **Language:** Rust
+- **CLI:** `kontena podman init`, `kontena podman start`, `kontena colima start`
+- **Build:** substrate `rust-tool-release-flake.nix`
+- **Consumed by:** `nix/modules/darwin/containers/{podman,colima}.nix`
 
 ### `blx`
 Shell extension utilities for blackmatter-shell.
