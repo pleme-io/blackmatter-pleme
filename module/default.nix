@@ -220,8 +220,8 @@ in {
     indexing = {
       enable = mkOption {
         type = types.bool;
-        default = true;
-        description = "Provide pleme-io repo lists for zoekt and codesearch indexing";
+        default = false;
+        description = "Provide pleme-io repo lists for zoekt and codesearch indexing. Only enable when zoekt-mcp and codesearch HM modules are loaded.";
       };
       zoektRepos = mkOption {
         type = types.listOf types.str;
