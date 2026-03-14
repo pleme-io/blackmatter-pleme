@@ -274,6 +274,13 @@ in {
     # ── Indexing ────────────────────────────────────────────────────
     (mkIf cfg.indexing.enable {
       services.zoekt.daemon.repos = cfg.indexing.zoektRepos ++ cfg.indexing.extraZoektRepos;
+      services.zoekt.daemon.github.sources = [{
+        owner = "pleme-io";
+        kind = "org";
+        cloneBase = "~/code/github/pleme-io";
+        skipArchived = true;
+        skipForks = false;
+      }];
       services.codesearch.daemon.github.sources = cfg.indexing.codesearchSources;
     })
   ]);
