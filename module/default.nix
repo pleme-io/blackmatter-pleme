@@ -129,7 +129,7 @@ let
         provider: github
         base_dir: ~/code/github/pleme-io
         clone_method: ssh
-        discover: false
+        discover: true
         org: pleme-io
         exclude:
           - ".github"
