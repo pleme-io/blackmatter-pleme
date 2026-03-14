@@ -1,18 +1,14 @@
+{ skillHelpers }:
 { lib, config, pkgs, ... }:
 with lib;
 let
   cfg = config.blackmatter.components.pleme;
 
-  # Skills auto-discovery
-  skillsDir = ../skills;
-  bundledSkillNames =
-    if builtins.pathExists skillsDir
-    then builtins.attrNames (lib.filterAttrs (_: t: t == "directory") (builtins.readDir skillsDir))
-    else [];
-  bundledSkillFiles = lib.listToAttrs (map (name:
-    lib.nameValuePair name (skillsDir + "/${name}/SKILL.md")
-  ) bundledSkillNames);
-  allSkillFiles = bundledSkillFiles // cfg.skills.extraSkills;
+  # Skills via substrate helper
+  skills = skillHelpers.mkSkills {
+    skillsDir = ../skills;
+    extraSkills = cfg.skills.extraSkills;
+  };
 
   # Default zoekt repo list — all pleme-io org repos worth indexing
   defaultZoektRepos = let base = "~/code/github/pleme-io"; in [
@@ -176,19 +172,8 @@ in {
   options.blackmatter.components.pleme = {
     enable = mkEnableOption "Pleme-io org conventions, workspace config, and skills";
 
-    # ── Skills ────────────────────────────────────────────────────────
-    skills = {
-      enable = mkOption {
-        type = types.bool;
-        default = true;
-        description = "Deploy pleme-io skills to ~/.claude/skills/";
-      };
-      extraSkills = mkOption {
-        type = types.attrsOf types.path;
-        default = {};
-        description = "Additional skill files. Keys are skill names, values are SKILL.md paths.";
-      };
-    };
+    # ── Skills (via substrate hm-skill-helpers) ────────────────────────
+    skills = skillHelpers.mkSkillOptions;
 
     # ── CLAUDE.md hierarchy ───────────────────────────────────────────
     claudeMd = {
@@ -242,13 +227,9 @@ in {
   };
 
   config = mkIf cfg.enable (mkMerge [
-    # ── Skills ──────────────────────────────────────────────────────
-    (mkIf (cfg.skills.enable && allSkillFiles != {}) {
-      home.file = lib.mapAttrs' (name: path:
-        lib.nameValuePair ".claude/skills/${name}/SKILL.md" {
-          source = path;
-        }
-      ) allSkillFiles;
+    # ── Skills (via substrate hm-skill-helpers) ──────────────────────
+    (mkIf (cfg.skills.enable && skills.files != {}) {
+      home.file = skills.homeFiles;
     })
 
     # ── CLAUDE.md hierarchy ─────────────────────────────────────────
