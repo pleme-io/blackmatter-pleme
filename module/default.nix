@@ -254,8 +254,12 @@ in {
     # ── CLAUDE.md hierarchy ─────────────────────────────────────────
     (mkIf cfg.claudeMd.enable {
       home.file."code/github/pleme-io/CLAUDE.md".source = ../docs/pleme-io-CLAUDE.md;
-      home.file."code/CLAUDE.md".source = ../docs/workspace-CLAUDE.md;
-      home.file."code/github/CLAUDE.md".source = ../docs/github-CLAUDE.md;
+
+      # Register pleme-io with blackmatter-github org table
+      blackmatter.components.github.claudeMd.orgEntries."pleme-io" = {
+        description = "Primary org -- infrastructure, products, platform libraries, tools";
+        cloneMethod = "ssh";
+      };
     })
 
     # ── Workspace ───────────────────────────────────────────────────
