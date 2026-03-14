@@ -154,16 +154,25 @@ cd ~/code/github/pleme-io/nix && nix run .#rebuild
 
 ## CLAUDE.md Hierarchy
 
-Each level provides progressively more specific guidance:
+Each level provides progressively more specific guidance, managed by dedicated modules:
 
 | File | Deployed From | Content |
 |------|--------------|---------|
-| `~/code/CLAUDE.md` | `blackmatter-pleme/docs/workspace-CLAUDE.md` | Directory convention, how to add services/orgs |
-| `~/code/github/CLAUDE.md` | `blackmatter-pleme/docs/github-CLAUDE.md` | GitHub-specific conventions, current orgs |
+| `~/code/CLAUDE.md` | `blackmatter-code/docs/code-CLAUDE.md` | Directory convention, how to add services/orgs |
+| `~/code/github/CLAUDE.md` | `blackmatter-github/docs/github-CLAUDE.md` | GitHub-specific conventions, org table (generated from orgEntries) |
 | `~/code/github/pleme-io/CLAUDE.md` | `blackmatter-pleme/docs/pleme-io-CLAUDE.md` | Full repo map, architecture, contribution guide |
+| `~/code/github/akeyless-community/CLAUDE.md` | `blackmatter-akeyless/docs/akeyless-community-CLAUDE.md` | Akeyless community repo map |
+| `~/code/github/akeylesslabs/CLAUDE.md` | `blackmatter-akeyless/docs/akeylesslabs-CLAUDE.md` | Akeyless official repo map |
 
-To update any CLAUDE.md, edit the source file in blackmatter-pleme and rebuild.
+To update any CLAUDE.md, edit the source file in the appropriate blackmatter module and rebuild.
 Do NOT edit the deployed symlinks directly.
+
+### Composable Registration
+
+Org modules register themselves with their parent layer:
+- `blackmatter-github` registers with `blackmatter-code` via `serviceEntries`
+- `blackmatter-pleme`, `blackmatter-akeyless` register with `blackmatter-github` via `orgEntries`
+- Personal orgs (drzln, binti-family) register via the `nix` repo
 
 ## Nix Integration for New Tools
 
