@@ -269,6 +269,8 @@ Rust. Deps: eizou, kenshou, denshin, tokio, axum. WebRTC SFU, screen sharing, re
 | `libraries` | Shared Rust crates + TypeScript packages (`@pleme/*`) | Rust+TS |
 | `tend` | Workspace repo manager + version watch daemon (`tend sync`, `tend watch`, `tend daemon`) | Rust |
 | `akeyless-matrix` | Version matrix manager for Akeyless Nix packages (`certify`, `generate`, `status`) | Rust |
+| `akeyless-api` | Auto-generated Rust SDK for Akeyless API (604 endpoints, 1334 types, from OpenAPI spec) | Rust |
+| `akeyless-nix` | Akeyless secret management for Nix — drop-in sops-nix replacement (`install`, `check`) | Rust+Nix |
 | `dev-tools` | Developer workflow scripts | — |
 | `kindling` | Nix flake management CLI | Rust |
 | `kontena` | Container runtime daemon (podman/colima) for macOS | Rust |
