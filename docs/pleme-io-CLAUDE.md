@@ -61,6 +61,7 @@ ONLY in `nix`. Everything else is generic and public.
 | `blackmatter-pleme` | pleme-io org conventions, Claude skills for substrate builders | Nix+MD | HM module |
 | `blackmatter-kubernetes` | K8s tooling: kubectl, k9s, k3d, helm, flux CLI | Nix | HM module |
 | `blackmatter-akeyless` | Akeyless org integration: Nix builds, version matrix, workspace config | Nix | HM module |
+| `blackmatter-atlassian` | Declarative acli + Rovo Dev provisioning, multi-site Atlassian config | Nix | HM module |
 | `blackmatter-security` | 200+ pentesting tools by category | Nix | HM module |
 | `blackmatter-profiles` | OCI shell images: `debug` (blzsh), `k8s` (debug+kubectl/helm/flux/k9s) | Nix | `ghcr.io/pleme-io/blackmatter-{debug,k8s}` |
 
@@ -275,6 +276,8 @@ Rust. Deps: eizou, kenshou, denshin, tokio, axum. WebRTC SFU, screen sharing, re
 | `kindling` | Nix flake management CLI | Rust |
 | `kontena` | Container runtime daemon (podman/colima) for macOS | Rust |
 | `blx` | Shell extensions for blackmatter-shell | Rust |
+| `pangea-akeyless` | Akeyless provider for Pangea DSL (117 resources, 22 data sources) | Ruby |
+| `atlassian-nix` | Nix packages for Atlassian CLI tools (acli, Rovo Dev) | Nix |
 
 ---
 
