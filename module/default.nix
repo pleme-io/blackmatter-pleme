@@ -167,6 +167,7 @@ let
             - blackmatter-pleme
             - blackmatter-services
             - blackmatter-profiles
+            - blackmatter-akeyless
   '';
 in {
   options.blackmatter.components.pleme = {

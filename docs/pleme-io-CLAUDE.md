@@ -60,6 +60,7 @@ ONLY in `nix`. Everything else is generic and public.
 | `blackmatter-claude` | Claude Code MCP servers, skills, hooks. Generic skills here | Nix+JSON | HM module |
 | `blackmatter-pleme` | pleme-io org conventions, Claude skills for substrate builders | Nix+MD | HM module |
 | `blackmatter-kubernetes` | K8s tooling: kubectl, k9s, k3d, helm, flux CLI | Nix | HM module |
+| `blackmatter-akeyless` | Akeyless org integration: Nix builds, version matrix, workspace config | Nix | HM module |
 | `blackmatter-security` | 200+ pentesting tools by category | Nix | HM module |
 | `blackmatter-profiles` | OCI shell images: `debug` (blzsh), `k8s` (debug+kubectl/helm/flux/k9s) | Nix | `ghcr.io/pleme-io/blackmatter-{debug,k8s}` |
 
@@ -266,7 +267,8 @@ Rust. Deps: eizou, kenshou, denshin, tokio, axum. WebRTC SFU, screen sharing, re
 | `curupira` | MCP for browser/React debugging via Chrome DevTools | TypeScript |
 | `pleme-linker` | Nix-native npm resolver for hermetic builds | Rust+Nix |
 | `libraries` | Shared Rust crates + TypeScript packages (`@pleme/*`) | Rust+TS |
-| `tend` | Workspace repo manager (`tend sync`, `tend status`) | Rust |
+| `tend` | Workspace repo manager + version watch daemon (`tend sync`, `tend watch`, `tend daemon`) | Rust |
+| `akeyless-matrix` | Version matrix manager for Akeyless Nix packages (`certify`, `generate`, `status`) | Rust |
 | `dev-tools` | Developer workflow scripts | — |
 | `kindling` | Nix flake management CLI | Rust |
 | `kontena` | Container runtime daemon (podman/colima) for macOS | Rust |
